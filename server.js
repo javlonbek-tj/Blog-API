@@ -5,7 +5,7 @@ import mongoConnect from './services/mongo.js';
 import { config } from 'dotenv';
 config();
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
 

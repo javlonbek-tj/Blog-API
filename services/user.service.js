@@ -1,27 +1,33 @@
 import UserModel from '../models/user.model.js';
 import ApiError from './appError.js';
-import { hash, compare } from 'brcyptjs';
+import bcrypt from 'bcryptjs';
 import { v4 } from 'uuid';
-import mailservice from './mailservice.js';
+import mailService from './mailservice.js';
 import tokenService from './tokenservice.js';
-import UserPayloadDto from '../dtos/userPayload.dto.js';
+import { config } from 'dotenv';
 
-export default class UserService {
-  async signup(email, password) {
+config();
+
+class UserService {
+  async signup(email, password, firstname, lastname) {
     const candidate = await UserModel.findOne({ email });
     if (candidate) {
-      throw new ApiError.BadRequest(`${email} is already taken`);
+      throw ApiError.BadRequest(`${email} is already taken`);
     }
-    const hashPassword = await hash(password, 10);
+    const hashPassword = await bcrypt.hash(password, 10);
     const activationLink = v4();
-    const user = await UserModel.create({ email, password: hashPassword });
-    await mailservice.sendActivationMail(
-      email,
-      `$process.env.API_URL/v1/api/activate/${activationLink}`,
-    );
-    const userPayloadDto = new UserPayloadDto(user);
-    const tokens = tokenService.generateTokens(userPayloadDto);
-    return { ...tokens, user: userPayloadDto };
+    const user = await UserModel.create({ email, password: hashPassword, firstname, lastname });
+    try {
+      await mailService.sendActivationMail(
+        email,
+        `${process.env.API_URL}/v1/api/activate/${activationLink}`,
+      );
+    } catch (e) {
+      console.log(e);
+    }
+    const tokens = tokenService.generateTokens(user._id, user.email);
+    await tokenService.saveToken(user._id, tokens.refreshToken);
+    return { ...tokens, user };
   }
 
   async activate(activationLink) {
@@ -38,14 +44,13 @@ export default class UserService {
     if (!user) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
-    const isPassEquals = await compare(password, user.password);
+    const isPassEquals = await bcrypt.compare(password, user.password);
     if (!isPassEquals) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
-    const userPayloadDto = new UserPayloadDto(user);
-    const tokens = tokenService.generateTokens({ ...userPayloadDto });
-    await tokenService.saveToken(userPayloadDto.id, tokens.refreshToken);
-    return { ...tokens, user: userPayloadDto };
+    const tokens = tokenService.generateTokens(user._id, user.email);
+    await tokenService.saveToken(user._id, tokens.refreshToken);
+    return { ...tokens, user };
   }
 
   async logout(refreshToken) {
@@ -63,10 +68,10 @@ export default class UserService {
       throw ApiError.UnauthorizedError();
     }
     const user = await UserModel.findById(userData.id);
-    const userPayloadDto = new UserPayloadDto(user);
-    const tokens = tokenService.generateTokens({ ...userPayloadDto });
-
-    await tokenService.saveToken(userPayloadDto.id, tokens.refreshToken);
-    return { ...tokens, user: userPayloadDto };
+    const tokens = tokenService.generateTokens(user._id, user.email);
+    await tokenService.saveToken(user._id, tokens.refreshToken);
+    return { ...tokens, user };
   }
 }
+
+export default new UserService();
