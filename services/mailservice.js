@@ -2,7 +2,6 @@ import nodemailer from 'nodemailer';
 import { config } from 'dotenv';
 
 config();
-console.log(process.env.NODEMAILER_PASS);
 
 class MailService {
   constructor() {

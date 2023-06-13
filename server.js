@@ -1,6 +1,6 @@
 import http from 'http';
 import app from './app.js';
-import mongoConnect from './services/mongo.js';
+import mongoConnect from './config/mongo.js';
 
 import { config } from 'dotenv';
 config();

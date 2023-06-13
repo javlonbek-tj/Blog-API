@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import TokenModel from '../models/token.model.js';
+import { config } from 'dotenv';
+config();
 
 class TokenService {
   generateTokens(id, email) {

@@ -16,11 +16,17 @@ class UserService {
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const activationLink = v4();
-    const user = await UserModel.create({ email, password: hashPassword, firstname, lastname });
+    const user = await UserModel.create({
+      email,
+      password: hashPassword,
+      firstname,
+      lastname,
+      activationLink,
+    });
     try {
       await mailService.sendActivationMail(
         email,
-        `${process.env.API_URL}/v1/api/activate/${activationLink}`,
+        `${process.env.API_URL}/v1/users/activate/${activationLink}`,
       );
     } catch (e) {
       console.log(e);
@@ -71,6 +77,29 @@ class UserService {
     const tokens = tokenService.generateTokens(user._id, user.email);
     await tokenService.saveToken(user._id, tokens.refreshToken);
     return { ...tokens, user };
+  }
+
+  async uploadUserPhoto(file, userId) {
+    const user = await UserModel.findById(userId);
+    console.log(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User not found');
+    }
+    if (user.isBlocked) {
+      throw ApiError.UnauthorizedError();
+    }
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          profilPhoto: file,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+    return updatedUser;
   }
 }
 
