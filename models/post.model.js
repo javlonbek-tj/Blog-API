@@ -14,7 +14,6 @@ const postSchema = new Schema(
     category: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
-      required: true,
     },
     numViews: [
       {
@@ -47,7 +46,6 @@ const postSchema = new Schema(
     },
     photo: {
       type: String,
-      required: true,
     },
   },
   {

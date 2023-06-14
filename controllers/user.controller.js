@@ -67,6 +67,15 @@ class UserController {
     }
   }
 
+  async findOne(req, res, next) {
+    try {
+      const user = await userService.findOne(req.params.id);
+      return res.json(user);
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async uploadUserPhoto(req, res, next) {
     try {
       const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user);

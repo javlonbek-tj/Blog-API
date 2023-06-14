@@ -1,4 +1,4 @@
-import UserModel from '../models/user.model.js';
+import UserModal from '../models/user.model.js';
 import ApiError from './appError.js';
 import bcrypt from 'bcryptjs';
 import { v4 } from 'uuid';
@@ -10,13 +10,13 @@ config();
 
 class UserService {
   async signup(email, password, firstname, lastname) {
-    const candidate = await UserModel.findOne({ email });
+    const candidate = await UserModal.findOne({ email });
     if (candidate) {
       throw ApiError.BadRequest(`${email} is already taken`);
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const activationLink = v4();
-    const user = await UserModel.create({
+    const user = await UserModal.create({
       email,
       password: hashPassword,
       firstname,
@@ -41,7 +41,7 @@ class UserService {
   }
 
   async activate(activationLink) {
-    const user = await UserModel.findOne({ activationLink });
+    const user = await UserModal.findOne({ activationLink });
     if (!user) {
       throw ApiError.BadRequest('Incorrect activationLink');
     }
@@ -50,7 +50,7 @@ class UserService {
   }
 
   async login(email, password) {
-    const user = await UserModel.findOne({ email });
+    const user = await UserModal.findOne({ email });
     if (!user) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
@@ -81,7 +81,7 @@ class UserService {
     if (!userData || !tokenFromDb) {
       throw ApiError.UnauthorizedError();
     }
-    const user = await UserModel.findById(userData.id);
+    const user = await UserModal.findById(userData.id);
     const payload = {
       id: user._id,
       email: user.email,
@@ -91,6 +91,14 @@ class UserService {
     return { ...tokens, user };
   }
 
+  async findOne(userId) {
+    const user = await UserModal.findById(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User not Found');
+    }
+    return user;
+  }
+
   async uploadUserPhoto(file, user) {
     if (!user) {
       throw ApiError.BadRequest('User not found');
@@ -98,7 +106,7 @@ class UserService {
     if (user.isBlocked) {
       throw ApiError.UnauthorizedError();
     }
-    const updatedUser = await UserModel.findByIdAndUpdate(
+    const updatedUser = await UserModal.findByIdAndUpdate(
       user._id,
       {
         $set: {
@@ -112,17 +120,17 @@ class UserService {
     return updatedUser;
   }
 
-  async visitUserProfile(userId, viewingUserId) {
-    const user = await UserModel.findById(userId);
-    if (user && viewingUserId) {
+  async visitUserProfile(userId, userWhoIsViewing) {
+    const user = await UserModal.findById(userId);
+    if (user && userWhoIsViewing) {
       // 1. Check if userWhoViewed is already in user's viewers array
       const isUserAlreadyViewed = user.viewers.find(
-        viewer => viewer.toString() === viewingUserId.toString(),
+        viewer => viewer.toString() === userWhoIsViewing._id.toString(),
       );
       if (isUserAlreadyViewed) {
         return user;
       }
-      user.viewers.push(viewingUserId);
+      user.viewers.push(userWhoIsViewing._id);
       await user.save();
       return user;
     }
@@ -130,7 +138,7 @@ class UserService {
   }
 
   async followUser(followedUserId, userWhoIsFollowing) {
-    const userToBeFollowed = await UserModel.findById(followedUserId);
+    const userToBeFollowed = await UserModal.findById(followedUserId);
     if (userToBeFollowed && userWhoIsFollowing) {
       // 1. Check if userWhoIsFollowing is already in user's follewers array
       const isUserAlreadyFollowed = userWhoIsFollowing.following.find(
@@ -148,7 +156,7 @@ class UserService {
     throw ApiError.BadRequest('User not found');
   }
   async unFollowUser(unFollowedUserId, userWhoIsUnFollowing) {
-    const userToBeUnFollowed = await UserModel.findById(unFollowedUserId);
+    const userToBeUnFollowed = await UserModal.findById(unFollowedUserId);
 
     if (userToBeUnFollowed && userWhoIsUnFollowing) {
       // 1. Check if userWhoIsFollowing is already in user's follewers array
@@ -173,7 +181,7 @@ class UserService {
   }
 
   async blockUser(userId, userWhoIsBlocking) {
-    const userToBeBlocked = await UserModel.findById(userId);
+    const userToBeBlocked = await UserModal.findById(userId);
 
     if (userToBeBlocked && userWhoIsBlocking) {
       // 1. Check if userToBeBlocked is already in user's blocked array
@@ -192,7 +200,7 @@ class UserService {
   }
 
   async unBlockUser(userId, userWhoIsUnblocking) {
-    const userToBeUnblocked = await UserModel.findById(userId);
+    const userToBeUnblocked = await UserModal.findById(userId);
 
     if (userToBeUnblocked && userWhoIsUnblocking) {
       // 1. Check if userToBeUnblocked is already in user's blocked array
@@ -213,7 +221,7 @@ class UserService {
   }
 
   async adminBlockUser(userId) {
-    const user = await UserModel.findById(userId);
+    const user = await UserModal.findById(userId);
     if (!user) {
       throw ApiError.BadRequest('User not Found');
     }
@@ -226,7 +234,7 @@ class UserService {
   }
 
   async adminUnBlockUser(userId) {
-    const user = await UserModel.findById(userId);
+    const user = await UserModal.findById(userId);
     if (!user) {
       throw ApiError.BadRequest('User not Found');
     }
