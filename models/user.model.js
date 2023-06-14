@@ -28,6 +28,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ['Admin', 'User', 'Editor'],
+      default: 'User',
     },
     viewers: [
       {
@@ -35,7 +36,13 @@ const userSchema = new Schema(
         ref: 'User',
       },
     ],
-    follewers: [
+    followers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    following: [
       {
         type: Schema.Types.ObjectId,
         ref: 'User',

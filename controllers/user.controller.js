@@ -69,10 +69,94 @@ class UserController {
 
   async uploadUserPhoto(req, res, next) {
     try {
-      const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user.id);
+      const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user);
       return res.json({
         status: 'success',
         updatedUser,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async visitUserProfile(req, res, next) {
+    try {
+      const user = await userService.visitUserProfile(req.params.id, req.user);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async followUser(req, res, next) {
+    try {
+      const user = await userService.followUser(req.params.id, req.user);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async unFollowUser(req, res, next) {
+    try {
+      const user = await userService.unFollowUser(req.params.id, req.user);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async blockUser(req, res, next) {
+    try {
+      const user = await userService.blockUser(req.params.id, req.user);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async unBlockUser(req, res, next) {
+    try {
+      const user = await userService.unBlockUser(req.params.id, req.user);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async adminBlockUser(req, res, next) {
+    try {
+      const user = await userService.adminBlockUser(req.params.id);
+      return res.json({
+        status: 'success',
+        user,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async adminUnBlockUser(req, res, next) {
+    try {
+      const user = await userService.adminUnBlockUser(req.params.id);
+      return res.json({
+        status: 'success',
+        user,
       });
     } catch (e) {
       next(e);

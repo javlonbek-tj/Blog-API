@@ -1,26 +1,38 @@
 import ApiError from '../services/appError.js';
 import tokenService from '../services/tokenservice.js';
+import UserModel from '../models/user.model.js';
 
-export default function (req, res, next) {
+export async function isAuth(req, res, next) {
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
-      return next(ApiError.UnauthorizedError());
+      return next(ApiError.UnauthenticatedError());
     }
 
     const accessToken = authorizationHeader.split(' ')[1];
     if (!accessToken) {
-      return next(ApiError.UnauthorizedError());
+      return next(ApiError.UnauthenticatedError());
     }
 
     const userData = tokenService.validateAccessToken(accessToken);
-    if (!userData) {
-      return next(ApiError.UnauthorizedError());
+
+    const currentUser = await UserModel.findById(userData.id);
+    if (!currentUser) {
+      return next(ApiError.UnauthenticatedError());
     }
 
-    req.user = userData;
+    req.user = currentUser;
     next();
   } catch (e) {
-    return next(ApiError.UnauthorizedError());
+    return next(ApiError.UnauthenticatedError());
   }
+}
+
+export function restrictTo(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(ApiError.UnauthorizedError());
+    }
+    next();
+  };
 }

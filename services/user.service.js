@@ -23,15 +23,19 @@ class UserService {
       lastname,
       activationLink,
     });
-    try {
+    /* try {
       await mailService.sendActivationMail(
         email,
         `${process.env.API_URL}/v1/users/activate/${activationLink}`,
       );
     } catch (e) {
       console.log(e);
-    }
-    const tokens = tokenService.generateTokens(user._id, user.email);
+    } */
+    const payload = {
+      id: user._id,
+      email: user.email,
+    };
+    const tokens = tokenService.generateTokens(payload);
     await tokenService.saveToken(user._id, tokens.refreshToken);
     return { ...tokens, user };
   }
@@ -54,7 +58,11 @@ class UserService {
     if (!isPassEquals) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
-    const tokens = tokenService.generateTokens(user._id, user.email);
+    const payload = {
+      id: user._id,
+      email: user.email,
+    };
+    const tokens = tokenService.generateTokens(payload);
     await tokenService.saveToken(user._id, tokens.refreshToken);
     return { ...tokens, user };
   }
@@ -74,13 +82,16 @@ class UserService {
       throw ApiError.UnauthorizedError();
     }
     const user = await UserModel.findById(userData.id);
-    const tokens = tokenService.generateTokens(user._id, user.email);
+    const payload = {
+      id: user._id,
+      email: user.email,
+    };
+    const tokens = tokenService.generateTokens(payload);
     await tokenService.saveToken(user._id, tokens.refreshToken);
     return { ...tokens, user };
   }
 
-  async uploadUserPhoto(file, userId) {
-    const user = await UserModel.findById(userId);
+  async uploadUserPhoto(file, user) {
     if (!user) {
       throw ApiError.BadRequest('User not found');
     }
@@ -88,7 +99,7 @@ class UserService {
       throw ApiError.UnauthorizedError();
     }
     const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
+      user._id,
       {
         $set: {
           profilPhoto: file,
@@ -99,6 +110,132 @@ class UserService {
       },
     );
     return updatedUser;
+  }
+
+  async visitUserProfile(userId, viewingUserId) {
+    const user = await UserModel.findById(userId);
+    if (user && viewingUserId) {
+      // 1. Check if userWhoViewed is already in user's viewers array
+      const isUserAlreadyViewed = user.viewers.find(
+        viewer => viewer.toString() === viewingUserId.toString(),
+      );
+      if (isUserAlreadyViewed) {
+        return user;
+      }
+      user.viewers.push(viewingUserId);
+      await user.save();
+      return user;
+    }
+    throw ApiError.BadRequest('User not found');
+  }
+
+  async followUser(followedUserId, userWhoIsFollowing) {
+    const userToBeFollowed = await UserModel.findById(followedUserId);
+    if (userToBeFollowed && userWhoIsFollowing) {
+      // 1. Check if userWhoIsFollowing is already in user's follewers array
+      const isUserAlreadyFollowed = userWhoIsFollowing.following.find(
+        follower => follower.toString() === followedUserId.toString(),
+      );
+      if (isUserAlreadyFollowed) {
+        throw new ApiError(400, 'You have already followed this user');
+      }
+      userToBeFollowed.followers.push(userWhoIsFollowing._id);
+      userWhoIsFollowing.following.push(followedUserId);
+      await userToBeFollowed.save();
+      await userWhoIsFollowing.save();
+      return userWhoIsFollowing;
+    }
+    throw ApiError.BadRequest('User not found');
+  }
+  async unFollowUser(unFollowedUserId, userWhoIsUnFollowing) {
+    const userToBeUnFollowed = await UserModel.findById(unFollowedUserId);
+
+    if (userToBeUnFollowed && userWhoIsUnFollowing) {
+      // 1. Check if userWhoIsFollowing is already in user's follewers array
+      const isUserAlreadyUnFollowed = userWhoIsUnFollowing.following.find(
+        follower => follower.toString() === unFollowedUserId.toString(),
+      );
+      if (!isUserAlreadyUnFollowed) {
+        throw new ApiError(400, 'You have not followed this user');
+      }
+
+      userToBeUnFollowed.followers = userToBeUnFollowed.followers.filter(
+        follower => follower.toString() !== userWhoIsUnFollowing._id.toString(),
+      );
+      userWhoIsUnFollowing.following = userWhoIsUnFollowing.following.filter(
+        follower => follower.toString() !== unFollowedUserId.toString(),
+      );
+      await userWhoIsUnFollowing.save();
+      await userToBeUnFollowed.save();
+      return userWhoIsUnFollowing;
+    }
+    throw ApiError.BadRequest('User not found');
+  }
+
+  async blockUser(userId, userWhoIsBlocking) {
+    const userToBeBlocked = await UserModel.findById(userId);
+
+    if (userToBeBlocked && userWhoIsBlocking) {
+      // 1. Check if userToBeBlocked is already in user's blocked array
+      const isUserAlreadyBlocked = userWhoIsBlocking.blocked.find(
+        blockedUser => blockedUser.toString() === userId.toString(),
+      );
+      if (isUserAlreadyBlocked) {
+        throw new ApiError(400, 'You have already blocked this user');
+      }
+
+      userWhoIsBlocking.blocked.push(userId);
+      await userWhoIsBlocking.save();
+      return userWhoIsBlocking;
+    }
+    throw ApiError.BadRequest('User not found');
+  }
+
+  async unBlockUser(userId, userWhoIsUnblocking) {
+    const userToBeUnblocked = await UserModel.findById(userId);
+
+    if (userToBeUnblocked && userWhoIsUnblocking) {
+      // 1. Check if userToBeUnblocked is already in user's blocked array
+      const isUserAlreadyUnBlocked = userWhoIsUnblocking.blocked.find(
+        blockedUser => blockedUser.toString() === userId.toString(),
+      );
+      if (!isUserAlreadyUnBlocked) {
+        throw new ApiError(400, 'You have not blocked this user');
+      }
+
+      userWhoIsUnblocking.blocked = userWhoIsUnblocking.blocked.filter(
+        blockedUser => blockedUser.toString() !== userId.toString(),
+      );
+      await userWhoIsUnblocking.save();
+      return userWhoIsUnblocking;
+    }
+    throw ApiError.BadRequest('User not found');
+  }
+
+  async adminBlockUser(userId) {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User not Found');
+    }
+    if (user.isBlocked) {
+      throw ApiError.BadRequest('User already blocked');
+    }
+    user.isBlocked = true;
+    await user.save();
+    return user;
+  }
+
+  async adminUnBlockUser(userId) {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User not Found');
+    }
+    if (!user.isBlocked) {
+      throw ApiError.BadRequest('User is not blocked');
+    }
+    user.isBlocked = false;
+    await user.save();
+    return user;
   }
 }
 

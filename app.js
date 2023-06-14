@@ -16,7 +16,7 @@ app.use(
   }),
 );
 
-app.use('/v1', api);
+app.use('/api/v1', api);
 
 //404 error
 app.use('*', (req, res) => {

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import UserController from '../controllers/user.controller.js';
 import multer from 'multer';
 import storage from '../config/cloudinary.js';
-import isAuth from '../middlewares/auth-middleware.js';
+import { isAuth, restrictTo } from '../middlewares/auth-middleware.js';
 
 const upload = multer({ storage });
 
@@ -24,5 +24,19 @@ userRotes.patch(
   upload.single('profile'),
   UserController.uploadUserPhoto,
 );
+
+userRotes.get('/profile-viewers/:id', isAuth, UserController.visitUserProfile);
+
+userRotes.get('/following/:id', isAuth, UserController.followUser);
+
+userRotes.get('/unFollowing/:id', isAuth, UserController.unFollowUser);
+
+userRotes.get('/blocking/:id', isAuth, UserController.blockUser);
+
+userRotes.get('/unBlocking/:id', isAuth, UserController.unBlockUser);
+
+userRotes.put('/admin-block/:id', isAuth, restrictTo('Admin'), UserController.adminBlockUser);
+
+userRotes.put('/admin-unblock/:id', isAuth, restrictTo('Admin'), UserController.adminUnBlockUser);
 
 export default userRotes;
