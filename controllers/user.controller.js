@@ -69,8 +69,7 @@ class UserController {
 
   async uploadUserPhoto(req, res, next) {
     try {
-      console.log(req.user);
-      const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user);
+      const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user.id);
       return res.json({
         status: 'success',
         updatedUser,

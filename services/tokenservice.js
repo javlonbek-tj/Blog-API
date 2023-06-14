@@ -6,10 +6,10 @@ config();
 class TokenService {
   generateTokens(id, email) {
     const accessToken = jwt.sign({ id, email }, process.env.JWT_ACCESS_SECRET, {
-      expiresIn: '15s',
+      expiresIn: '15d',
     });
     const refreshToken = jwt.sign({ id, email }, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: '30s',
+      expiresIn: '30d',
     });
     return {
       accessToken,

@@ -1,7 +1,7 @@
 import ApiError from '../services/appError.js';
 import tokenService from '../services/tokenservice.js';
 
-export default async function (req, res, next) {
+export default function (req, res, next) {
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
@@ -13,13 +13,12 @@ export default async function (req, res, next) {
       return next(ApiError.UnauthorizedError());
     }
 
-    const userData = await tokenService.validateAccessToken(accessToken);
-    console.log(userData);
+    const userData = tokenService.validateAccessToken(accessToken);
     if (!userData) {
       return next(ApiError.UnauthorizedError());
     }
 
-    req.user = userData._id;
+    req.user = userData;
     next();
   } catch (e) {
     return next(ApiError.UnauthorizedError());

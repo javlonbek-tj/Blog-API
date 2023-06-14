@@ -81,7 +81,6 @@ class UserService {
 
   async uploadUserPhoto(file, userId) {
     const user = await UserModel.findById(userId);
-    console.log(userId);
     if (!user) {
       throw ApiError.BadRequest('User not found');
     }
