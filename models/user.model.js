@@ -1,5 +1,6 @@
 import { model, Schema } from 'mongoose';
 import PostModal from './post.model.js';
+import crypto from 'crypto';
 
 const userSchema = new Schema(
   {
@@ -21,6 +22,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
     isBlocked: {
       type: Boolean,
@@ -79,6 +81,9 @@ const userSchema = new Schema(
     activationLink: {
       type: String,
     },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   {
     timestamps: true,
@@ -87,12 +92,13 @@ const userSchema = new Schema(
   },
 );
 
-userSchema.pre('findOne', async function (next) {
+userSchema.pre('/^find/', async function (next) {
   this.populate({
     path: 'posts',
   });
 
   /* Last post date that is created by user */
+
   const userId = this._conditions._id;
   const posts = await PostModal.find({ user: userId }).sort({ createdAt: 1 });
   const lastPost = posts[posts.length - 1];
@@ -143,9 +149,8 @@ userSchema.pre('findOne', async function (next) {
     }
   });
 
-  //----------------------------------------------
-  //Update userAward based on the number of posts
-  //--------------------------------------------
+  // Update userAward based on the number of posts
+
   //get the number of posts
   const numberOfPosts = posts.length;
   //check if the number of posts is less than 10
@@ -205,6 +210,24 @@ userSchema.virtual('viewersCount').get(function () {
 userSchema.virtual('blockedCount').get(function () {
   return this.blocked.length;
 });
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
+};
 
 const User = model('User', userSchema);
 

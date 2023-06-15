@@ -1,12 +1,12 @@
 import ApiError from './appError.js';
-import postModal from '../models/post.model.js';
+import PostModal from '../models/post.model.js';
 
 class PostService {
   async createPost(body, user) {
-    if (!user) {
-      throw ApiError.BadRequest('User not Found');
+    if (user.blocked) {
+      throw new ApiError(403, 'Access denied, You account is blocked');
     }
-    const newPost = await postModal.create({ ...body, user: user._id });
+    const newPost = await PostModal.create({ ...body, user: user._id });
     user.posts.push(newPost);
     await user.save();
     return newPost;

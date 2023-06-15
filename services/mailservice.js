@@ -14,15 +14,12 @@ class MailService {
     });
   }
 
-  async sendActivationMail(to, link) {
+  async sendMail(to, subject, html) {
     await this.transporter.sendMail({
       from: process.env.NODEMAILER_USER,
       to,
-      subject: 'Your activation link',
-      html: `<div>
-            <h1>For activation hit this link</h1>
-            <a href="${link}">${link}</a>
-            </div>`,
+      subject,
+      html,
     });
   }
 }

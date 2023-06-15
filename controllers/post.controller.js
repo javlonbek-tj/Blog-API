@@ -9,7 +9,10 @@ class PostController {
         description,
       };
       const newPost = await postService.createPost(postBody, req.user);
-      return res.json(newPost);
+      return res.status(201).json({
+        status: 'success',
+        data: newPost,
+      });
     } catch (e) {
       next(e);
     }

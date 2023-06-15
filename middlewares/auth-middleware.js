@@ -21,6 +21,10 @@ export async function isAuth(req, res, next) {
       return next(ApiError.UnauthenticatedError());
     }
 
+    if (currentUser.changedPasswordAfter(userData.iat)) {
+      return next(new ApiError(401, 'User recently changed password. Please login again'));
+    }
+
     req.user = currentUser;
     next();
   } catch (e) {

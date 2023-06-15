@@ -15,7 +15,10 @@ class UserController {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
-      return res.json(userData);
+      return res.status(201).json({
+        status: 'success',
+        data: userData,
+      });
     } catch (e) {
       next(e);
     }
@@ -29,7 +32,10 @@ class UserController {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
-      return res.json(userData);
+      return res.status(201).json({
+        status: 'success',
+        data: userData,
+      });
     } catch (e) {
       next(e);
     }
@@ -37,9 +43,12 @@ class UserController {
   async logout(req, res, next) {
     try {
       const { refreshToken } = req.cookies;
-      const token = await userService.logout(refreshToken);
+      await userService.logout(refreshToken);
       res.clearCookie('refreshToken');
-      return res.json('Logout successfully');
+      return res.status(200).json({
+        status: 'success',
+        message: 'You have successfully logged out',
+      });
     } catch (e) {
       next(e);
     }
@@ -61,7 +70,9 @@ class UserController {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
-      return res.json(userData);
+      return res.status(200).json({
+        status: 'success',
+      });
     } catch (e) {
       next(e);
     }
@@ -70,7 +81,10 @@ class UserController {
   async findOne(req, res, next) {
     try {
       const user = await userService.findOne(req.params.id);
-      return res.json(user);
+      return res.status(200).json({
+        status: 'success',
+        data: user,
+      });
     } catch (e) {
       next(e);
     }
@@ -79,9 +93,9 @@ class UserController {
   async uploadUserPhoto(req, res, next) {
     try {
       const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user);
-      return res.json({
+      return res.status(200).json({
         status: 'success',
-        updatedUser,
+        data: updatedUser,
       });
     } catch (e) {
       next(e);
@@ -90,10 +104,10 @@ class UserController {
 
   async visitUserProfile(req, res, next) {
     try {
-      const user = await userService.visitUserProfile(req.params.id, req.user);
-      return res.json({
+      const userToBeViewed = await userService.visitUserProfile(req.params.id, req.user);
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: userToBeViewed,
       });
     } catch (e) {
       next(e);
@@ -102,10 +116,10 @@ class UserController {
 
   async followUser(req, res, next) {
     try {
-      const user = await userService.followUser(req.params.id, req.user);
-      return res.json({
+      const userWhoIsFollowing = await userService.followUser(req.params.id, req.user);
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: userWhoIsFollowing,
       });
     } catch (e) {
       next(e);
@@ -114,10 +128,10 @@ class UserController {
 
   async unFollowUser(req, res, next) {
     try {
-      const user = await userService.unFollowUser(req.params.id, req.user);
-      return res.json({
+      const userWhoIsUnFollowing = await userService.unFollowUser(req.params.id, req.user);
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: userWhoIsUnFollowing,
       });
     } catch (e) {
       next(e);
@@ -126,10 +140,10 @@ class UserController {
 
   async blockUser(req, res, next) {
     try {
-      const user = await userService.blockUser(req.params.id, req.user);
-      return res.json({
+      const userWhoIsBlocking = await userService.blockUser(req.params.id, req.user);
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: userWhoIsBlocking,
       });
     } catch (e) {
       next(e);
@@ -138,10 +152,10 @@ class UserController {
 
   async unBlockUser(req, res, next) {
     try {
-      const user = await userService.unBlockUser(req.params.id, req.user);
-      return res.json({
+      const userWhoIsUnBlocking = await userService.unBlockUser(req.params.id, req.user);
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: userWhoIsUnBlocking,
       });
     } catch (e) {
       next(e);
@@ -151,9 +165,9 @@ class UserController {
   async adminBlockUser(req, res, next) {
     try {
       const user = await userService.adminBlockUser(req.params.id);
-      return res.json({
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: user,
       });
     } catch (e) {
       next(e);
@@ -163,31 +177,76 @@ class UserController {
   async adminUnBlockUser(req, res, next) {
     try {
       const user = await userService.adminUnBlockUser(req.params.id);
-      return res.json({
+      return res.status(200).json({
         status: 'success',
-        user,
+        data: user,
       });
     } catch (e) {
       next(e);
     }
   }
 
-  async updatedUser(req, res, next) {
+  async updatedUserInfo(req, res, next) {
     try {
-      const { email, firstname, lastname } = req.body;
+      const { firstname, lastname, email } = req.body;
       const updatingFields = {
         email,
         firstname,
         lastname,
       };
-      const updatedUser = await userService.updateUser(req.user._id, updatingFields);
-      return res.json({
-        success: 'true',
-        updatedUser,
+      const updatedUser = await userService.updatedUserInfo(req.user, updatingFields);
+      return res.status(200).json({
+        status: 'success',
+        data: updatedUser,
       });
     } catch (e) {
       next(e);
     }
+  }
+
+  async updateUserPassword(req, res, next) {
+    try {
+      const { oldPass, newPass, newPassConfirm } = req.body;
+      await userService.updateUserPassword(req.user._id, oldPass, newPass, newPassConfirm);
+      return res.status(200).json({
+        status: 'success',
+        message: 'You have successfully changed your password!',
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      const host = req.get('host');
+      const protocol = req.protocol;
+      await userService.forgotPassword(email, protocol, host);
+      res.status(200).json({
+        status: 'success',
+        message: 'ResetToken sent to your email!',
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    const { token } = req.params;
+    await userService.resetPassword(token, req.body.password);
+    return res.status(200).json({
+      status: 'success',
+      message: 'You have successfully changed your password!',
+    });
+  }
+
+  async deleteAccount(req, res, next) {
+    await userService.deleteAccount(req.user._id);
+    return res.status(204).json({
+      status: 'success',
+      message: 'User deleted successfully',
+    });
   }
 }
 

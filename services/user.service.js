@@ -4,15 +4,28 @@ import bcrypt from 'bcryptjs';
 import { v4 } from 'uuid';
 import mailService from './mailservice.js';
 import tokenService from './tokenservice.js';
+import crypto from 'crypto';
 import { config } from 'dotenv';
+import PostModal from '../models/post.model.js';
+import FeedbackModal from '../models/feedback.model.js';
+import CategoryModal from '../models/category.model.js';
 
 config();
 
+const createAndSaveTokens = async (id, email) => {
+  const tokens = tokenService.generateTokens({ id, email });
+  await tokenService.saveToken(id, tokens.refreshToken);
+  return tokens;
+};
+
 class UserService {
-  async signup(email, password, firstname, lastname) {
+  async signup(email, password, passwordConfirm, firstname, lastname) {
     const candidate = await UserModal.findOne({ email });
     if (candidate) {
       throw ApiError.BadRequest(`${email} is already taken`);
+    }
+    if (password !== passwordConfirm) {
+      throw ApiError.BadRequest('Passwords are not the same');
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const activationLink = v4();
@@ -24,19 +37,22 @@ class UserService {
       activationLink,
     });
     /* try {
+      const subject = 'Your activation link';
+      const link = `${process.env.API_URL}/v1/users/activate/${activationLink}`
+      const html = `<div>
+            <h1>For activation hit this link</h1>
+            <a href="${link}">${link}</a>
+            </div>`
       await mailService.sendActivationMail(
         email,
-        `${process.env.API_URL}/v1/users/activate/${activationLink}`,
+        subject,
+        html
       );
     } catch (e) {
-      console.log(e);
+      await Usermodal.deleteOne({email})
+      throw new ApiError(500, 'There was an error sending the email. Try again later!')
     } */
-    const payload = {
-      id: user._id,
-      email: user.email,
-    };
-    const tokens = tokenService.generateTokens(payload);
-    await tokenService.saveToken(user._id, tokens.refreshToken);
+    const tokens = await createAndSaveTokens(user._id, email);
     return { ...tokens, user };
   }
 
@@ -58,12 +74,7 @@ class UserService {
     if (!isPassEquals) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
-    const payload = {
-      id: user._id,
-      email: user.email,
-    };
-    const tokens = tokenService.generateTokens(payload);
-    await tokenService.saveToken(user._id, tokens.refreshToken);
+    const tokens = await createAndSaveTokens(user._id, email);
     return { ...tokens, user };
   }
 
@@ -121,18 +132,18 @@ class UserService {
   }
 
   async visitUserProfile(userId, userWhoIsViewing) {
-    const user = await UserModal.findById(userId);
-    if (user && userWhoIsViewing) {
+    const userToBeViewed = await UserModal.findById(userId);
+    if (userToBeViewed && userWhoIsViewing) {
       // 1. Check if userWhoViewed is already in user's viewers array
-      const isUserAlreadyViewed = user.viewers.find(
+      const isUserAlreadyViewed = userToBeViewed.viewers.find(
         viewer => viewer.toString() === userWhoIsViewing._id.toString(),
       );
       if (isUserAlreadyViewed) {
-        return user;
+        return userToBeViewed;
       }
-      user.viewers.push(userWhoIsViewing._id);
-      await user.save();
-      return user;
+      userToBeViewed.viewers.push(userWhoIsViewing._id);
+      await userToBeViewed.save();
+      return userToBeViewed;
     }
     throw ApiError.BadRequest('User not found');
   }
@@ -246,20 +257,88 @@ class UserService {
     return user;
   }
 
-  async updateUser(userId, body) {
-    const { email } = body;
-    if (email) {
-      const isEmailTaken = await UserModal.findOne({ email });
-      if (isEmailTaken) {
-        throw ApiError.BadRequest('Email is taken');
-      }
+  async updateUserInfo(user, body) {
+    if (user.email === body.email) {
+      return user;
     }
-
-    const updatedUser = await UserModal.findByIdAndUpdate(userId, body, {
+    const isEmailTaken = await UserModal.findOne({ email: body.email });
+    if (isEmailTaken) {
+      throw ApiError.BadRequest(`${body.email} is already taken`);
+    }
+    const updatedUser = await UserModal.findByIdAndUpdate(user._id, body, {
       new: true,
       runValidators: true,
     });
     return updatedUser;
+  }
+
+  async updateUserPassword(userId, oldPass, newPass, newPassConfirm) {
+    const user = await UserModal.findById(userId).select('+password');
+
+    const isPassEquals = await bcrypt.compare(oldPass, user.password);
+    if (!isPassEquals) {
+      throw ApiError.BadRequest('OldPassword is incorrect');
+    }
+
+    if (newPass !== newPassConfirm) {
+      throw ApiError.BadRequest('Passwords are not the same');
+    }
+    const hashedPassword = await bcrypt.hash(newPass, 10);
+    user.password = hashedPassword;
+    await user.save();
+    return user;
+  }
+
+  async forgotPassword(email, protocol, host) {
+    const user = await UserModal.findOne(email);
+    if (!user) {
+      throw ApiError.BadRequest('User with this email not Found');
+    }
+    const resetToken = user.createPasswordResetToken();
+    const resetUrl = `${protocol}://${host}/api/v1/users/resetPassword/${resetToken}`;
+
+    // Send resetUrl to user's email
+    try {
+      const subject = 'Your password reset token (valid for only 10 minutes)';
+      const link = `${protocol}://${host}/api/v1/users/resetPassword/${resetUrl}`;
+      const html = `<div>
+            <h1>For reset password hit this link</h1>
+            <a href="${link}">${link}</a>
+            </div>`;
+      await mailService.sendMail(email, subject, html);
+    } catch (e) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+      throw new ApiError(500, 'There was an error sending the email. Try again later!');
+    }
+  }
+
+  async resetPassword(resetToken, password) {
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const user = await UserModal.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      throw ApiError.BadRequest('Token is invalid or has expired');
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    await createAndSaveTokens(user._id, user.email);
+    return user;
+  }
+
+  async deleteAccount(userId) {
+    await PostModal.deleteMany({ user: userId });
+    await FeedbackModal.deleteMany({ user: userId });
+    await CategoryModal.deleteMany({ user: userId });
+    const deletedUser = await UserModal.findByIdAndRemove(userId);
+    return deletedUser;
   }
 }
 

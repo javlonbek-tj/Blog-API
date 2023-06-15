@@ -41,6 +41,14 @@ userRoutes.put('/admin-block/:id', isAuth, restrictTo('Admin'), UserController.a
 
 userRoutes.put('/admin-unblock/:id', isAuth, restrictTo('Admin'), UserController.adminUnBlockUser);
 
-userRoutes.put('/', isAuth, UserController.updatedUser);
+userRoutes.put('/', isAuth, UserController.updatedUserInfo);
+
+userRoutes.put('/updateMyPassword', isAuth, UserController.updateUserPassword);
+
+userRoutes.post('/forgotPassword', isAuth, UserController.forgotPassword);
+
+userRoutes.put('/resetPassword/:token', isAuth, UserController.resetPassword);
+
+userRoutes.delete('/delete-account', isAuth, UserController.deleteAccount);
 
 export default userRoutes;
