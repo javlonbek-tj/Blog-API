@@ -41,4 +41,6 @@ userRoutes.put('/admin-block/:id', isAuth, restrictTo('Admin'), UserController.a
 
 userRoutes.put('/admin-unblock/:id', isAuth, restrictTo('Admin'), UserController.adminUnBlockUser);
 
+userRoutes.put('/', isAuth, UserController.updatedUser);
+
 export default userRoutes;

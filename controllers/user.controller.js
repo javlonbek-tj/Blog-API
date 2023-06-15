@@ -171,6 +171,24 @@ class UserController {
       next(e);
     }
   }
+
+  async updatedUser(req, res, next) {
+    try {
+      const { email, firstname, lastname } = req.body;
+      const updatingFields = {
+        email,
+        firstname,
+        lastname,
+      };
+      const updatedUser = await userService.updateUser(req.user._id, updatingFields);
+      return res.json({
+        success: 'true',
+        updatedUser,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 
 export default new UserController();

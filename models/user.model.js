@@ -88,11 +88,15 @@ const userSchema = new Schema(
 );
 
 userSchema.pre('findOne', async function (next) {
+  this.populate({
+    path: 'posts',
+  });
+
   /* Last post date that is created by user */
   const userId = this._conditions._id;
   const posts = await PostModal.find({ user: userId }).sort({ createdAt: 1 });
   const lastPost = posts[posts.length - 1];
-  const lastPostDate = new Date(lastPost.createdAt);
+  const lastPostDate = new Date(lastPost?.createdAt);
   userSchema.virtual('lastPostDate').get(function () {
     return lastPostDate;
   });

@@ -245,6 +245,22 @@ class UserService {
     await user.save();
     return user;
   }
+
+  async updateUser(userId, body) {
+    const { email } = body;
+    if (email) {
+      const isEmailTaken = await UserModal.findOne({ email });
+      if (isEmailTaken) {
+        throw ApiError.BadRequest('Email is taken');
+      }
+    }
+
+    const updatedUser = await UserModal.findByIdAndUpdate(userId, body, {
+      new: true,
+      runValidators: true,
+    });
+    return updatedUser;
+  }
 }
 
 export default new UserService();
