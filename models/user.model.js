@@ -31,7 +31,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ['Admin', 'User', 'Editor'],
-      default: 'User',
+      default: 'Admin',
     },
     viewers: [
       {
@@ -60,7 +60,7 @@ const userSchema = new Schema(
     comments: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Feedback',
+        ref: 'Comment',
       },
     ],
     blocked: [

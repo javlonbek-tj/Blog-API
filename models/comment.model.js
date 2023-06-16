@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
 
-const feedbackSchema = new Schema(
+const commentSchema = new Schema(
   {
     post: {
       type: Schema.Types.ObjectId,
@@ -21,6 +21,4 @@ const feedbackSchema = new Schema(
   },
 );
 
-const Feedback = model('Feedback', feedbackSchema);
-
-export default Feedback;
+export default model('Comment', commentSchema);

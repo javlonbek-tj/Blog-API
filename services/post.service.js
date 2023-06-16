@@ -56,6 +56,9 @@ class PostService {
 
   async postDetail(postId, userId) {
     const post = await PostModal.findById(postId);
+    if (!post) {
+      throw ApiError.BadRequest('Post not Found');
+    }
     const isViewed = post.numViews.includes(userId);
     if (isViewed) {
       return post;
@@ -63,6 +66,34 @@ class PostService {
     post.numViews.push(userId);
     await post.save();
     return post;
+  }
+
+  async deletePost(postId, user) {
+    const post = await PostModal.findById(postId);
+    if (!post) {
+      throw ApiError.BadRequest('Post not Found');
+    }
+    if (post.user.toString() === user._id.toString() || user.role === 'Admin') {
+      const deletedPost = await PostModal.findByIdAndRemove(postId);
+      return deletedPost;
+    } else {
+      throw ApiError.UnauthorizedError();
+    }
+  }
+
+  async updatePost(postId, userId, body) {
+    const post = await PostModal.findById(postId);
+    if (!post) {
+      throw ApiError.BadRequest('Post not Found');
+    }
+    if (post.user.toString() !== userId.toString()) {
+      throw ApiError.UnauthorizedError();
+    }
+    const updatedPost = await PostModal.findByIdAndUpdate(postId, body, {
+      new: true,
+      runValidators: true,
+    });
+    return updatedPost;
   }
 }
 

@@ -7,7 +7,7 @@ import tokenService from './tokenservice.js';
 import crypto from 'crypto';
 import { config } from 'dotenv';
 import PostModal from '../models/post.model.js';
-import FeedbackModal from '../models/feedback.model.js';
+import CommentModal from '../models/comment.model.js';
 import CategoryModal from '../models/category.model.js';
 
 config();
@@ -325,7 +325,7 @@ class UserService {
 
   async deleteAccount(userId) {
     await PostModal.deleteMany({ user: userId });
-    await FeedbackModal.deleteMany({ user: userId });
+    await CommentModal.deleteMany({ user: userId });
     await CategoryModal.deleteMany({ user: userId });
     const deletedUser = await UserModal.findByIdAndRemove(userId);
     return deletedUser;
