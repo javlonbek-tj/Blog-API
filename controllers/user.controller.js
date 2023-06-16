@@ -9,15 +9,21 @@ class UserController {
       if (!errors.isEmpty()) {
         return next(ApiError.BadRequest('Validation error', errors.array()));
       }
-      const { email, password, firstname, lastname } = req.body;
-      const userData = await userService.signup(email, password, firstname, lastname);
+      const { email, password, firstname, lastname, passwordConfirm } = req.body;
+      const userData = await userService.signup(
+        email,
+        password,
+        passwordConfirm,
+        firstname,
+        lastname,
+      );
       res.cookie('refreshToken', userData.refreshToken, {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
       return res.status(201).json({
         status: 'success',
-        data: userData,
+        userData,
       });
     } catch (e) {
       next(e);
@@ -32,9 +38,9 @@ class UserController {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
-      return res.status(201).json({
+      return res.status(200).json({
         status: 'success',
-        data: userData,
+        userData,
       });
     } catch (e) {
       next(e);
@@ -83,7 +89,7 @@ class UserController {
       const user = await userService.findOne(req.params.id);
       return res.status(200).json({
         status: 'success',
-        data: user,
+        user,
       });
     } catch (e) {
       next(e);
@@ -95,7 +101,7 @@ class UserController {
       const updatedUser = await userService.uploadUserPhoto(req.file.path, req.user);
       return res.status(200).json({
         status: 'success',
-        data: updatedUser,
+        user: updatedUser,
       });
     } catch (e) {
       next(e);
@@ -107,7 +113,7 @@ class UserController {
       const userToBeViewed = await userService.visitUserProfile(req.params.id, req.user);
       return res.status(200).json({
         status: 'success',
-        data: userToBeViewed,
+        user: userToBeViewed,
       });
     } catch (e) {
       next(e);
@@ -119,7 +125,7 @@ class UserController {
       const userWhoIsFollowing = await userService.followUser(req.params.id, req.user);
       return res.status(200).json({
         status: 'success',
-        data: userWhoIsFollowing,
+        user: userWhoIsFollowing,
       });
     } catch (e) {
       next(e);
@@ -131,7 +137,7 @@ class UserController {
       const userWhoIsUnFollowing = await userService.unFollowUser(req.params.id, req.user);
       return res.status(200).json({
         status: 'success',
-        data: userWhoIsUnFollowing,
+        user: userWhoIsUnFollowing,
       });
     } catch (e) {
       next(e);
@@ -143,7 +149,7 @@ class UserController {
       const userWhoIsBlocking = await userService.blockUser(req.params.id, req.user);
       return res.status(200).json({
         status: 'success',
-        data: userWhoIsBlocking,
+        user: userWhoIsBlocking,
       });
     } catch (e) {
       next(e);
@@ -155,7 +161,7 @@ class UserController {
       const userWhoIsUnBlocking = await userService.unBlockUser(req.params.id, req.user);
       return res.status(200).json({
         status: 'success',
-        data: userWhoIsUnBlocking,
+        user: userWhoIsUnBlocking,
       });
     } catch (e) {
       next(e);
@@ -167,7 +173,7 @@ class UserController {
       const user = await userService.adminBlockUser(req.params.id);
       return res.status(200).json({
         status: 'success',
-        data: user,
+        user,
       });
     } catch (e) {
       next(e);
@@ -179,7 +185,7 @@ class UserController {
       const user = await userService.adminUnBlockUser(req.params.id);
       return res.status(200).json({
         status: 'success',
-        data: user,
+        user,
       });
     } catch (e) {
       next(e);
@@ -197,7 +203,7 @@ class UserController {
       const updatedUser = await userService.updatedUserInfo(req.user, updatingFields);
       return res.status(200).json({
         status: 'success',
-        data: updatedUser,
+        user: updatedUser,
       });
     } catch (e) {
       next(e);

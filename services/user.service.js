@@ -12,10 +12,12 @@ import CategoryModal from '../models/category.model.js';
 
 config();
 
-const createAndSaveTokens = async (id, email) => {
-  const tokens = tokenService.generateTokens({ id, email });
-  await tokenService.saveToken(id, tokens.refreshToken);
-  return tokens;
+const createAndSaveTokens = async user => {
+  const payload = { id: user._id, email: user.email };
+  const tokens = tokenService.generateTokens(payload);
+  await tokenService.saveToken(user._id, tokens.refreshToken);
+  user.password = undefined;
+  return { ...tokens, user };
 };
 
 class UserService {
@@ -52,8 +54,7 @@ class UserService {
       await Usermodal.deleteOne({email})
       throw new ApiError(500, 'There was an error sending the email. Try again later!')
     } */
-    const tokens = await createAndSaveTokens(user._id, email);
-    return { ...tokens, user };
+    return createAndSaveTokens(user);
   }
 
   async activate(activationLink) {
@@ -66,7 +67,7 @@ class UserService {
   }
 
   async login(email, password) {
-    const user = await UserModal.findOne({ email });
+    const user = await UserModal.findOne({ email }).select('+password');
     if (!user) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
@@ -74,8 +75,7 @@ class UserService {
     if (!isPassEquals) {
       throw ApiError.BadRequest('Incorrect email or password');
     }
-    const tokens = await createAndSaveTokens(user._id, email);
-    return { ...tokens, user };
+    return createAndSaveTokens(user);
   }
 
   async logout(refreshToken) {
@@ -93,13 +93,7 @@ class UserService {
       throw ApiError.UnauthorizedError();
     }
     const user = await UserModal.findById(userData.id);
-    const payload = {
-      id: user._id,
-      email: user.email,
-    };
-    const tokens = tokenService.generateTokens(payload);
-    await tokenService.saveToken(user._id, tokens.refreshToken);
-    return { ...tokens, user };
+    return createAndSaveTokens(user);
   }
 
   async findOne(userId) {
@@ -111,9 +105,6 @@ class UserService {
   }
 
   async uploadUserPhoto(file, user) {
-    if (!user) {
-      throw ApiError.BadRequest('User not found');
-    }
     if (user.isBlocked) {
       throw ApiError.UnauthorizedError();
     }
@@ -286,7 +277,7 @@ class UserService {
     const hashedPassword = await bcrypt.hash(newPass, 10);
     user.password = hashedPassword;
     await user.save();
-    return user;
+    return createAndSaveTokens(user);
   }
 
   async forgotPassword(email, protocol, host) {
@@ -329,8 +320,7 @@ class UserService {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
-    await createAndSaveTokens(user._id, user.email);
-    return user;
+    return createAndSaveTokens(user);
   }
 
   async deleteAccount(userId) {

@@ -8,23 +8,18 @@ export async function isAuth(req, res, next) {
     if (!authorizationHeader) {
       return next(ApiError.UnauthenticatedError());
     }
-
     const accessToken = authorizationHeader.split(' ')[1];
     if (!accessToken) {
       return next(ApiError.UnauthenticatedError());
     }
-
     const userData = tokenService.validateAccessToken(accessToken);
-
     const currentUser = await UserModel.findById(userData.id);
     if (!currentUser) {
       return next(ApiError.UnauthenticatedError());
     }
-
     if (currentUser.changedPasswordAfter(userData.iat)) {
       return next(new ApiError(401, 'User recently changed password. Please login again'));
     }
-
     req.user = currentUser;
     next();
   } catch (e) {

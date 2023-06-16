@@ -2,8 +2,8 @@ import ApiError from './appError.js';
 import CategoryModal from '../models/category.model.js';
 
 class CategoryService {
-  async createCategory(title, user) {
-    if (user.blocked) {
+  async createCategory(user, title) {
+    if (user.isBlocked) {
       throw new ApiError(403, 'Access denied, Your account is blocked');
     }
     const newCategory = await CategoryModal.create({ user: user._id, title });

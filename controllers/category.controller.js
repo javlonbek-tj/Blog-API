@@ -6,7 +6,7 @@ class CategoryController {
       const newCategory = await categoryService.createCategory(req.user, req.body.title);
       return res.status(201).json({
         status: 'success',
-        data: newCategory,
+        newCategory,
       });
     } catch (e) {
       next(e);
@@ -18,7 +18,7 @@ class CategoryController {
       const allCategories = await categoryService.getAllCategories();
       return res.status(200).json({
         status: 'success',
-        data: allCategories,
+        allCategories,
       });
     } catch (e) {
       next(e);
@@ -30,7 +30,7 @@ class CategoryController {
       const category = await categoryService.findOneCategory(req.params.id);
       return res.status(200).json({
         status: 'success',
-        data: category,
+        category,
       });
     } catch (e) {
       next(e);

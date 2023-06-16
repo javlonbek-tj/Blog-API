@@ -7,4 +7,12 @@ const postRoutes = Router();
 
 postRoutes.post('/', isAuth, PostController.createPost);
 
+postRoutes.get('/:id', isAuth, PostController.postDetail);
+
+postRoutes.get('/likes/:id', isAuth, PostController.toggleLikes);
+
+postRoutes.get('/dislikes/:id', isAuth, PostController.toggleDisLikes);
+
+postRoutes.get('/', isAuth, PostController.findAllPosts);
+
 export default postRoutes;
