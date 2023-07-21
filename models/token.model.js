@@ -3,10 +3,11 @@ import { model, Schema } from 'mongoose';
 const tokenSchema = new Schema({
   user: {
     type: Schema.Types.ObjectId,
-    refreshToken: {
-      type: String,
-      required: true,
-    },
+    ref: 'User',
+  },
+  refreshToken: {
+    type: String,
+    required: true,
   },
 });
 
