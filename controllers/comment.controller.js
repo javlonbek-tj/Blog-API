@@ -3,7 +3,11 @@ import commentService from '../services/comment.service.js';
 class CommentController {
   async createComment(req, res, next) {
     try {
-      const comment = await commentService(req.params.id, req.user, req.body.description);
+      const comment = await commentService.createComment(
+        req.body.postId,
+        req.user,
+        req.body.description,
+      );
       return res.status(201).json({
         status: 'success',
         comment,

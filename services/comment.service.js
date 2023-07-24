@@ -5,7 +5,7 @@ import ApiError from './appError.js';
 class CommentService {
   async createComment(postId, user, description) {
     const post = await PostModal.findById(postId);
-    const comment = await Comment.create({ post: postId, description, user: user._id });
+    const comment = await CommentModal.create({ post: postId, description, user: user._id });
     post.comments.push(comment._id);
     user.comments.push(comment._id);
     await post.save();
