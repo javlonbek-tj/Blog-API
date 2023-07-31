@@ -1,6 +1,12 @@
 import http from 'http';
 import app from './app.js';
 import mongoConnect from './config/mongo.js';
+import logger from './config/logger.js';
+
+process.on('uncaughtException', err => {
+  logger.error(err);
+  process.exit(1);
+});
 
 import { config } from 'dotenv';
 config();
@@ -18,3 +24,10 @@ async function startServer() {
 }
 
 startServer();
+
+process.on('unhandledRejection', err => {
+  logger.error(err);
+  server.close(() => {
+    process.exit(1);
+  });
+});

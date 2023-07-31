@@ -2,9 +2,9 @@ import { validationResult } from 'express-validator';
 import ApiError from '../services/appError.js';
 import userService from '../services/user.service.js';
 
+
 class UserController {
   async signup(req, res, next) {
-    try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return next(ApiError.BadRequest('Validation error', errors.array()));
@@ -25,9 +25,6 @@ class UserController {
         status: 'success',
         userData,
       });
-    } catch (e) {
-      next(e);
-    }
   }
 
   async login(req, res, next) {
