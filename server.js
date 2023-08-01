@@ -4,7 +4,7 @@ import mongoConnect from './config/mongo.js';
 import logger from './config/logger.js';
 
 process.on('uncaughtException', err => {
-  logger.error(err);
+  logger.error('Uncaught Exception:', err);
   process.exit(1);
 });
 
@@ -16,17 +16,17 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
 async function startServer() {
-  await mongoConnect();
+    await mongoConnect();
 
-  server.listen(PORT, () => {
-    console.log(`Server is listening on port ${PORT}`);
-  });
+    server.listen(PORT, () => {
+      console.log(`Server is listening on port ${PORT}`);
+    });
 }
 
 startServer();
 
 process.on('unhandledRejection', err => {
-  logger.error(err);
+  logger.error('Unhandled rejection:', err);
   server.close(() => {
     process.exit(1);
   });

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import logger from './logger.js';
 
 import { config } from 'dotenv';
 config();
@@ -10,7 +11,7 @@ mongoose.connection.once('open', () => {
 });
 
 mongoose.connection.on('error', err => {
-  console.error(err);
+  logger.error(err);
 });
 
 export default async function mongoConnect() {

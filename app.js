@@ -3,7 +3,6 @@ import cookieParser from 'cookie-parser';
 import api from './routes/api.js';
 import errorMiddleware from './middlewares/error-middleware.js';
 import cors from 'cors';
-import('express-async-errors');
 
 const app = express();
 
