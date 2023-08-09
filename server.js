@@ -25,9 +25,4 @@ async function startServer() {
 
 startServer();
 
-process.on('unhandledRejection', err => {
-  logger.error('Unhandled rejection:', err);
-  server.close(() => {
-    process.exit(1);
-  });
-});
+

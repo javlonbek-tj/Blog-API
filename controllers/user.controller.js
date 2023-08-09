@@ -2,7 +2,6 @@ import { validationResult } from 'express-validator';
 import ApiError from '../services/appError.js';
 import userService from '../services/user.service.js';
 
-
 class UserController {
   async signup(req, res, next) {
     try {
@@ -18,10 +17,15 @@ class UserController {
         firstname,
         lastname,
       );
-      res.cookie('refreshToken', userData.refreshToken, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+      const isProduction = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         httpOnly: true,
-      });
+      };
+      if (isProduction) {
+        cookieOptions.secure = true;
+      }
+      res.cookie('refreshToken', userData.refreshToken, cookieOptions);
       return res.status(201).json({
         status: 'success',
         userData,
@@ -29,7 +33,6 @@ class UserController {
     } catch (e) {
       next(e);
     }
-      
   }
 
   async login(req, res, next) {
