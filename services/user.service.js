@@ -38,22 +38,18 @@ class UserService {
       lastname,
       activationLink,
     });
-    /* try {
+    try {
       const subject = 'Your activation link';
-      const link = `${process.env.API_URL}/v1/users/activate/${activationLink}`
+      const link = `${process.env.API_URL}/v1/users/activate/${activationLink}`;
       const html = `<div>
             <h1>For activation hit this link</h1>
             <a href="${link}">${link}</a>
-            </div>`
-      await mailService.sendActivationMail(
-        email,
-        subject,
-        html
-      );
+            </div>`;
+      await mailService.sendActivationMail(email, subject, html);
     } catch (e) {
-      await Usermodal.deleteOne({email})
-      throw new ApiError(500, 'There was an error sending the email. Try again later!')
-    } */
+      await Usermodal.deleteOne({ email });
+      throw new ApiError(500, 'There was an error sending the email. Try again later!');
+    }
     return createAndSaveTokens(user);
   }
 
