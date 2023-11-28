@@ -11,7 +11,7 @@ mongoose.connection.once('open', () => {
 });
 
 mongoose.connection.on('error', err => {
-  logger.error('Mongo connection error', err);
+  logger.error('Mongo connection error:', err);
 });
 
 export default async function mongoConnect() {

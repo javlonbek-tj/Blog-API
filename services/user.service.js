@@ -287,7 +287,7 @@ class UserService {
     // Send resetUrl to user's email
     try {
       const subject = 'Your password reset token (valid for only 10 minutes)';
-      const link = `${protocol}://${host}/api/v1/users/resetPassword/${resetUrl}`;
+      const link = resetUrl;
       const html = `<div>
             <h1>For reset password hit this link</h1>
             <a href="${link}">${link}</a>
