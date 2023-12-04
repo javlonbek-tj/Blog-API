@@ -75,14 +75,14 @@ postSchema.pre(/^find/, function (next) {
 
   // the most liked post in percentage
   postSchema.virtual('likesPercentage').get(function () {
-    const total = +this.likes.length + Number(this.likes.length);
+    const total = +this.likes.length + Number(this.dislikes.length);
     const percentage = (this.likes.length / total) * 100;
     return `${percentage}%`;
   });
 
   // the most disliked post in percentage
   postSchema.virtual('dislikesPercentage').get(function () {
-    const total = +this.dislikes.length + Number(this.dislikes.length);
+    const total = +this.dislikes.length + Number(this.likes.length);
     const percentage = (this.dislikes.length / total) * 100;
     return `${percentage}%`;
   });
@@ -90,7 +90,7 @@ postSchema.pre(/^find/, function (next) {
   // days ago post creation date
   postSchema.virtual('daysAgo').get(function () {
     const date = new Date(this.createdAt);
-    const daysAgo = Math.floor((Date.now() - date) / 864000000);
+    const daysAgo = Math.floor((Date.now() - date) / 86400000);
     return daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`;
   });
 
