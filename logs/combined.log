@@ -1,3 +1,7 @@
 2023-11-22 17:40:38: error: querySrv ENOTFOUND _mongodb._tcp.cluster0.uopphf1.mongodb.net
 2023-11-22 17:41:52: error: Mongo connection error querySrv ENOTFOUND _mongodb._tcp.cluster0.uopphf1.mongodb.net
 2023-11-22 17:42:09: error: Mongo connection error querySrv ENOTFOUND _mongodb._tcp.cluster0.uopphf1.mongodb.net
+2023-11-30 17:38:56: error: Usermodal is not defined
+2023-11-30 17:40:06: error: Usermodal is not defined
+2023-11-30 17:43:06: error: Cannot destructure property 'path' of 'req.file' as it is undefined.
+2023-11-30 17:44:29: error: Cannot destructure property 'path' of 'req.file' as it is undefined.
